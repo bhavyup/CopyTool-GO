@@ -1,0 +1,15 @@
+tests/
+tools/
+temp/
+bin/
+dist/
+build/
+*.log
+*.tmp
+*.cache
+*.bak
+*.swp
+*.swo
+*.DS_Store
+.idea/
+.vscode/    
