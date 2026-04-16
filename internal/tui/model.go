@@ -286,10 +286,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				)
 			} else {
 				m.StatusMessage = fmt.Sprintf(
-					"Indexed %d files across %d folders. Selected %d file(s). Press t to toggle, w for workspace, f for filters, s to export.",
+					"Indexed %d files across %d folders. Press t to toggle, w for workspace, f for filters, s to export.",
 					msg.Stats.Files,
 					msg.Stats.Dirs,
-					msg.SelectedCount,
 				)
 			}
 
@@ -762,43 +761,45 @@ func (m *Model) handleWorkspaceMouse(msg tea.MouseMsg) tea.Cmd {
 	if !panelRect.Contains(msg.X, msg.Y) {
 		return nil
 	}
+	layout := m.workspaceDrawerLayout(th, metrics)
 
-	rootY := contentY + metrics.RootLine
-	outY := contentY + metrics.OutputLine
-	clipY := contentY + metrics.ClipLine
+	clickRow := msg.Y - contentY
+	rootStart, rootEnd := renderedLineSpan(layout.Lines, layout.RootLineIndex)
+	outStart, outEnd := renderedLineSpan(layout.Lines, layout.OutputLineIndex)
+	clipStart, clipEnd := renderedLineSpan(layout.Lines, layout.ClipLineIndex)
 
-	// Button is placed after: input.View() + " "
-	btnX0 := contentX + metrics.InputW + 1
-	btnX1 := btnX0 + metrics.ButtonW
+	rootBtnX0 := contentX + layout.RootButtonStart
+	rootBtnX1 := contentX + layout.RootButtonEnd
+	outBtnX0 := contentX + layout.OutputButtonStart
+	outBtnX1 := contentX + layout.OutputButtonEnd
 
 	x := msg.X
-	y := msg.Y
 
 	// Root line
-	if y == rootY {
+	if inRenderedSpan(clickRow, rootStart, rootEnd) {
 		m.WorkspaceFocusIndex = 0
 		m.focusWorkspaceInput(0)
 
 		// If click is inside the pill => open picker
-		if x >= btnX0 && x < btnX1 {
+		if x >= rootBtnX0 && x < rootBtnX1 {
 			return m.workspaceOpenPickerCmd("root")
 		}
 		return nil
 	}
 
 	// Output line
-	if y == outY {
+	if inRenderedSpan(clickRow, outStart, outEnd) {
 		m.WorkspaceFocusIndex = 1
 		m.focusWorkspaceInput(1)
 
-		if x >= btnX0 && x < btnX1 {
+		if x >= outBtnX0 && x < outBtnX1 {
 			return m.workspaceOpenPickerCmd("output")
 		}
 		return nil
 	}
 
 	// Clipboard line toggles anywhere on that line
-	if y == clipY {
+	if inRenderedSpan(clickRow, clipStart, clipEnd) {
 		m.ClipboardEnabled = !m.ClipboardEnabled
 		if m.ClipboardEnabled {
 			m.StatusMessage = "Clipboard export enabled."
@@ -844,26 +845,28 @@ func (m *Model) handleFiltersMouse(msg tea.MouseMsg) tea.Cmd {
 	if !panelRect.Contains(msg.X, msg.Y) {
 		return nil
 	}
+	layout := m.filtersDrawerLayout(th, metrics)
 
-	includeY := contentY + metrics.IncludeLine
-	excludeY := contentY + metrics.ExcludeLine
-	dirsY := contentY + metrics.DirsLine
-	clipY := contentY + metrics.ClipLine
+	clickRow := msg.Y - contentY
+	includeStart, includeEnd := renderedLineSpan(layout.Lines, layout.IncludeLineIndex)
+	excludeStart, excludeEnd := renderedLineSpan(layout.Lines, layout.ExcludeLineIndex)
+	dirsStart, dirsEnd := renderedLineSpan(layout.Lines, layout.DirsLineIndex)
+	clipStart, clipEnd := renderedLineSpan(layout.Lines, layout.ClipLineIndex)
 
-	switch msg.Y {
-	case includeY:
+	switch {
+	case inRenderedSpan(clickRow, includeStart, includeEnd):
 		m.FilterFocusIndex = 0
 		m.focusFilterInput(0)
 		return nil
-	case excludeY:
+	case inRenderedSpan(clickRow, excludeStart, excludeEnd):
 		m.FilterFocusIndex = 1
 		m.focusFilterInput(1)
 		return nil
-	case dirsY:
+	case inRenderedSpan(clickRow, dirsStart, dirsEnd):
 		m.FilterFocusIndex = 2
 		m.focusFilterInput(2)
 		return nil
-	case clipY:
+	case inRenderedSpan(clickRow, clipStart, clipEnd):
 		m.ClipboardEnabled = !m.ClipboardEnabled
 		if m.ClipboardEnabled {
 			m.StatusMessage = "Clipboard export enabled."
@@ -874,6 +877,32 @@ func (m *Model) handleFiltersMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 
 	return nil
+}
+
+func renderedLineSpan(lines []string, index int) (int, int) {
+	if index < 0 || index >= len(lines) {
+		return 0, 0
+	}
+
+	start := 0
+	for i := 0; i < index; i++ {
+		start += renderedLineHeight(lines[i])
+	}
+
+	end := start + renderedLineHeight(lines[index])
+	return start, end
+}
+
+func renderedLineHeight(line string) int {
+	h := lipgloss.Height(line)
+	if h < 1 {
+		return 1
+	}
+	return h
+}
+
+func inRenderedSpan(row, start, end int) bool {
+	return row >= start && row < end
 }
 
 func (m *Model) beginAsyncScan(
@@ -1026,7 +1055,7 @@ func (m Model) hitCheckbox(mouseX, contentX int, node *core.Node) bool {
 	}
 
 	checkboxStart := contentX + node.Depth()*2 + 2
-	checkboxEnd := checkboxStart + 3
+	checkboxEnd := checkboxStart + 2
 
 	return mouseX >= checkboxStart && mouseX < checkboxEnd
 }
@@ -1050,7 +1079,7 @@ func (m Model) panelRects() (rect, rect, rect, rect) {
 	availableWidth := max(40, m.Width-th.App.GetHorizontalFrameSize())
 	gap := 1
 
-	leftWidth := (availableWidth - gap) * 56 / 100
+	leftWidth := (availableWidth - gap) * 54 / 100
 	rightWidth := availableWidth - leftWidth - gap
 
 	bodyY := m.bodyTop()
@@ -1332,9 +1361,9 @@ func (m Model) focusedRelPath() string {
 
 func (m Model) filterBadgeLabel() string {
 	if m.hasCustomFilters() {
-		return "filters custom"
+		return "[f]ilters: custom"
 	}
-	return "filters base"
+	return "[f]ilters: base"
 }
 
 func (m Model) hasCustomFilters() bool {
@@ -1540,8 +1569,8 @@ func (m Model) drawerPanelAndContentRects(style lipgloss.Style, panelW, panelH i
 	renderedW := panelW + style.GetHorizontalFrameSize()
 	renderedH := panelH + style.GetVerticalFrameSize()
 
-	left := 1 + centeredOffset(placeW, renderedW)
-	top := 1 + centeredOffset(placeH, renderedH)
+	left := centeredOffset(placeW, renderedW)
+	top := centeredOffset(placeH, renderedH)
 
 	panelRect := rect{
 		X: left,

@@ -1,16 +1,18 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	"copytool/internal/theme"
-	// "github.com/charmbracelet/lipgloss"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 type filtersDrawerMetrics struct {
 	PanelW      int
 	PanelH      int
+	ContentW    int
 	InputW      int
 	IncludeLine int
 	ExcludeLine int
@@ -18,18 +20,27 @@ type filtersDrawerMetrics struct {
 	ClipLine    int
 }
 
-func (m Model) filtersDrawerSizing(th theme.Theme) filtersDrawerMetrics {
-	panelW := min(92, max(58, m.Width-16))
-	// Keep height large enough to avoid content overflow shifting mouse hit rows.
-	const minPanelH = 32
-	panelH := min(34, max(minPanelH, m.Height-6))
+type filtersDrawerLayout struct {
+	Lines            []string
+	IncludeLineIndex int
+	ExcludeLineIndex int
+	DirsLineIndex    int
+	ClipLineIndex    int
+}
 
-	// same as before; no button column
-	inputW := max(24, panelW-10)
+func (m Model) filtersDrawerSizing(th theme.Theme) filtersDrawerMetrics {
+	panelW := min(110, max(68, m.Width-12))
+	// Match panel height to current rendered content to avoid dead space at bottom.
+	const contentLines = 23
+	panelH := min(contentLines, max(16, m.Height-6))
+
+	contentW := max(30, panelW-th.PanelFocused.GetHorizontalFrameSize())
+	inputW := max(24, contentW-1)
 
 	return filtersDrawerMetrics{
 		PanelW:      panelW,
 		PanelH:      panelH,
+		ContentW:    contentW,
 		InputW:      inputW,
 		IncludeLine: 5,
 		ExcludeLine: 9,
@@ -40,6 +51,17 @@ func (m Model) filtersDrawerSizing(th theme.Theme) filtersDrawerMetrics {
 
 func (m Model) renderFiltersDrawer(th theme.Theme) string {
 	metrics := m.filtersDrawerSizing(th)
+	layout := m.filtersDrawerLayout(th, metrics)
+
+	panel := th.PanelFocused.Copy().
+		Width(metrics.PanelW).
+		Height(metrics.PanelH).
+		Render(strings.Join(layout.Lines, "\n"))
+
+	return placeOverlay(m, max(40, m.Width-2), max(12, m.Height-2), panel)
+}
+
+func (m Model) filtersDrawerLayout(th theme.Theme, metrics filtersDrawerMetrics) filtersDrawerLayout {
 
 	includeInput := m.FilterIncludeInput
 	excludeInput := m.FilterExcludeInput
@@ -49,46 +71,163 @@ func (m Model) renderFiltersDrawer(th theme.Theme) string {
 	excludeInput.Width = metrics.InputW
 	dirsInput.Width = metrics.InputW
 
-	clipboardState := "[ ] off"
-	if m.ClipboardEnabled {
-		clipboardState = "[x] on"
+	inputRowStyle := th.DrawerInput.Copy().
+		Width(metrics.ContentW).
+		Padding(0, 0)
+
+	includeRow := inputRowStyle.Render(includeInput.View())
+	excludeRow := inputRowStyle.Render(excludeInput.View())
+	dirsRow := inputRowStyle.Render(dirsInput.View())
+
+	focusLabel := m.filtersFocusLabel()
+
+	profileChip := th.HeaderBadge.Render("base")
+	if m.hasCustomFilters() {
+		profileChip = th.HeaderBadge.Copy().Foreground(th.P.Accent).Bold(true).Render("custom")
 	}
+
+	clipboardGlyph := th.TreeSelNone.Render("○")
+	clipboardChip := clipboardGlyph + th.HeaderBadge.Background(th.P.Surface).Render("clipboard")
+	if m.ClipboardEnabled {
+		clipboardGlyph = th.TreeSelFull.Render("●")
+		clipboardChip = clipboardGlyph + th.HeaderBadge.Copy().Background(th.P.Surface).Foreground(th.P.Success).Bold(true).Render("clipboard")
+	}
+
+	rightChips := strings.Join([]string{
+		profileChip,
+		th.HeaderBadge.Render("focus: " + focusLabel),
+		clipboardChip,
+	}, th.TextWS.Render(" ▏"))
+
+	titleRow := padBetween(th, th.TreeRowDir.Render("Filters"), rightChips, metrics.ContentW)
+	rule := th.Muted.Background(th.P.Surface).Render(strings.Repeat("─", metrics.ContentW))
+
+	controlsTop := []string{
+		theme.KeyHintAccent(th, "Enter", " apply"),
+		FilterFooterCmd(th, "Esc", " close"),
+		FilterFooterCmd(th, "Tab", " next"),
+		FilterFooterCmd(th, "Shift+Tab", " prev"),
+	}
+
+	controlsBottom := []string{
+		FilterFooterCmd(th, "Ctrl+R", " reset"),
+		FilterFooterCmd(th, "Ctrl+B", " clipboard"),
+		FilterFooterCmd(th, "click", " focus/toggle"),
+	}
+
+	controlsPrimary, controlsSecondary := renderFilterControlRows(th, metrics.ContentW, controlsTop, controlsBottom)
 
 	lines := []string{
-		th.HeaderTitle.Render("Filters"),
+		titleRow,
+		rule,
+		th.DrawerHint.Render("Edit filter sets and apply to rescan the workspace tree."),
 		"",
-		th.Muted.Render("Refine the visible workspace, then apply and rescan the tree."),
-		"",
-		th.Accent.Render("Include extensions"),
-		includeInput.View(),
-		th.Muted.Render("  comma separated · empty means allow every extension"),
-		"",
-		th.Accent.Render("Exclude extensions"),
-		excludeInput.View(),
-		th.Muted.Render("  comma separated · matched files disappear from the tree"),
-		"",
-		th.Accent.Render("Exclude directories"),
-		dirsInput.View(),
-		th.Muted.Render("  comma separated · .git and tools remain hidden always"),
-		"",
-		th.Accent.Render("Clipboard"),
-		th.Text.Render(fmt.Sprintf("  %s  export result to clipboard", clipboardState)),
-		"",
-		th.Accent.Render("Controls"),
-		th.Muted.Render("  Click field        focus"),
-		th.Muted.Render("  Click clipboard    toggle"),
-		th.Muted.Render("  Tab / Shift+Tab    move between fields"),
-		th.Muted.Render("  Enter              apply filters"),
-		th.Muted.Render("  Ctrl+R             reset fields to defaults"),
-		th.Muted.Render("  Ctrl+B             toggle clipboard"),
-		th.Muted.Render("  Esc                close drawer"),
-		th.Muted.Render("  plain typing always goes into the focused input"),
+		theme.RuledSection(th, "INCLUDE EXTENSIONS", metrics.ContentW),
 	}
 
-	panel := th.PanelFocused.Copy().
-		Width(metrics.PanelW).
-		Height(metrics.PanelH).
-		Render(strings.Join(lines, "\n"))
+	includeLineIndex := len(lines)
+	lines = append(lines,
+		includeRow,
+		RenderAtEdge(th, th.DrawerHint.Render("comma separated, example: go,md,txt"), metrics.ContentW),
+		"",
+		theme.RuledSection(th, "EXCLUDE EXTENSIONS", metrics.ContentW),
+	)
 
-	return placeOverlay(m, max(40, m.Width-2), max(12, m.Height-2), panel)
+	excludeLineIndex := len(lines)
+	lines = append(lines,
+		excludeRow,
+		RenderAtEdge(th, th.DrawerHint.Render("comma separated, example: log,tmp"), metrics.ContentW),
+		"",
+		theme.RuledSection(th, "EXCLUDE DIRECTORIES", metrics.ContentW),
+	)
+
+	dirsLineIndex := len(lines)
+	lines = append(lines,
+		dirsRow,
+		RenderAtEdge(th, th.DrawerHint.Render("comma separated, .git & tools remain hidden always"), metrics.ContentW),
+		"",
+		theme.RuledSection(th, "OUTPUT", metrics.ContentW),
+	)
+
+	clipLineIndex := len(lines)
+	lines = append(lines,
+		th.Text.Background(th.P.Surface).Render("  ")+clipboardGlyph+th.Text.Background(th.P.Surface).Render("  export result to clipboard"),
+		RenderAtEdge(th, th.DrawerHint.Render("toggled with Ctrl+B/mouse click"), metrics.ContentW),
+		"",
+		theme.RuledSection(th, "CONTROLS", metrics.ContentW),
+		controlsPrimary,
+		controlsSecondary,
+	)
+
+	return filtersDrawerLayout{
+		Lines:            lines,
+		IncludeLineIndex: includeLineIndex,
+		ExcludeLineIndex: excludeLineIndex,
+		DirsLineIndex:    dirsLineIndex,
+		ClipLineIndex:    clipLineIndex,
+	}
+}
+
+func (m Model) filtersFocusLabel() string {
+	switch m.FilterFocusIndex {
+	case 1:
+		return "exclude ext"
+	case 2:
+		return "exclude dirs"
+	default:
+		return "include ext"
+	}
+}
+
+func RenderAtEdge(th theme.Theme, label string, width int) string {
+	padding := max(0, width-lipgloss.Width(label))
+	return th.Text.Render(strings.Repeat(" ", padding) + label)
+}
+
+func FilterFooterCmd(th theme.Theme, key, desc string) string {
+	keyPart := th.TreeRowDir.Bold(true).Background(lipgloss.Color("#000000")).Render(key)
+	textPart := th.Status.Render(desc)
+	return keyPart + textPart
+}
+
+func renderFilterControlRows(th theme.Theme, width int, top, bottom []string) (string, string) {
+	cols := max(len(top), len(bottom))
+	if cols == 0 {
+		return "", ""
+	}
+
+	colWidths := make([]int, cols)
+	base := max(1, width/cols)
+	rem := max(0, width-base*cols)
+
+	for i := 0; i < cols; i++ {
+		colWidths[i] = base
+		if i < rem {
+			colWidths[i]++
+		}
+	}
+
+	return renderFilterControlRow(th, width, top, colWidths), renderFilterControlRow(th, width, bottom, colWidths)
+}
+
+func renderFilterControlRow(th theme.Theme, width int, items []string, colWidths []int) string {
+	var b strings.Builder
+	for i, cellWidth := range colWidths {
+		item := ""
+		if i < len(items) {
+			item = items[i]
+		}
+
+		cell := ansi.Truncate(item, max(1, cellWidth), "")
+		if i < len(colWidths)-1 {
+			cellW := lipgloss.Width(cell)
+			if cellW < cellWidth {
+				cell += strings.Repeat(th.TextWS.Render(" "), cellWidth-cellW)
+			}
+		}
+
+		b.WriteString(cell)
+	}
+
+	return ansi.Truncate(b.String(), width, "")
 }

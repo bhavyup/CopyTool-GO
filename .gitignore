@@ -4,6 +4,8 @@ temp/
 bin/
 dist/
 build/
+coverage.out
+coverage.html
 *.log
 *.tmp
 *.cache

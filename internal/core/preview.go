@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	previewByteLimit  = 64 * 1024
-	previewLineLimit  = 32
+	previewByteLimit  = 256 * 1024
+	previewLineLimit  = 256
 	folderSampleLimit = 10
 )
 

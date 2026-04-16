@@ -44,31 +44,33 @@ func (m Model) renderCompactFooter(th theme.Theme) string {
 	maxWidth := max(20, m.Width-th.App.GetHorizontalFrameSize())
 	rule := footerRule(th, maxWidth)
 
-	controls := footerLabel(th, "COMPACT") + "  " + strings.Join([]string{
-		footerCmd(th, "t", "oggle"),
-		footerCmd(th, "s", "ave"),
-		footerCmd(th, "c", "lipboard"),
-		footerCmd(th, "f", "ilters"),
-		footerCmd(th, "w", "orkspace"),
-		footerCmd(th, "q", "uit"),
-		footerCmd(th, "?", " help"),
-	}, "   ")
+	actions := []string{
+		footerCmdPrimary(th, "s", "save"),
+		footerCmd(th, "q", "quit"),
+		footerCmd(th, "t", "toggle"),
+		footerCmd(th, "c", "clipboard"),
+		footerCmd(th, "f", "filters"),
+		footerCmd(th, "w", "workspace"),
+		footerCmd(th, "?", "help"),
+	}
 
-	nav := footerLabel(th, "NAV") + "  " + strings.Join([]string{
-		footerCmd(th, "tab", " pane"),
-		footerCmd(th, "↑↓", " move"),
-		footerCmd(th, "←→", " tree"),
-		footerCmd(th, "PgUp/PgDn", " page"),
-		footerCmd(th, "Home/End", " bounds"),
-		footerCmd(th, "e", " expand"),
-	}, "   ")
+	nav := []string{
+		footerCmd(th, "tab", "pane"),
+		footerCmd(th, "↑↓", "move"),
+		footerCmd(th, "←→", "tree"),
+		footerCmd(th, "PgUp/PgDn", "page"),
+		footerCmd(th, "Home/End", "bounds"),
+		footerCmd(th, "e", "expand"),
+	}
+	labelColWidth := footerLabelColumnWidth(th, "actions", "nav")
+	colWidths := footerColumnWidths(actions, nav)
 
-	status := footerLabel(th, "STATUS") + "  " + th.Status.Render("compact  ·  "+m.StatusMessage)
+	rows := []string{
+		rule,
+		m.footerStatusLine(th, maxWidth, "compact"),
+	}
+	rows = append(rows, footerAlignedHintsLine(th, maxWidth, "actions", actions, colWidths, labelColWidth))
+	rows = append(rows, footerAlignedHintsLine(th, maxWidth, "nav", nav, colWidths, labelColWidth))
 
-	return th.Footer.Render(
-		rule + "\n" +
-			footerFit(maxWidth, controls) + "\n" +
-			footerFit(maxWidth, nav) + "\n" +
-			footerFit(maxWidth, status),
-	)
+	return th.Footer.Render(strings.Join(rows, "\n"))
 }
