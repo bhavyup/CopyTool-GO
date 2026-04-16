@@ -22,7 +22,11 @@ updates:
       day: "monday"
       time: "05:30"
       timezone: "UTC"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "ci"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"

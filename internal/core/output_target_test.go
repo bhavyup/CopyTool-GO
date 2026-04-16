@@ -41,9 +41,32 @@ func TestResolveOutputPathDotUsesCurrentWorkingDirectory(t *testing.T) {
 		t.Fatalf("ResolveOutputPath returned error: %v", err)
 	}
 
-	want := filepath.Join(workDir, "tools", "output.txt")
-	if got != want {
-		t.Fatalf("unexpected output path for dot spec: got %q want %q", got, want)
+	if filepath.Base(got) != "output.txt" {
+		t.Fatalf("unexpected output filename for dot spec: got %q", got)
+	}
+
+	if filepath.Base(filepath.Dir(got)) != "tools" {
+		t.Fatalf("unexpected output parent directory for dot spec: got %q", filepath.Dir(got))
+	}
+
+	// On macOS, temp paths may surface as /var/... or /private/var/... depending on resolution.
+	canonicalWorkDir, err := filepath.EvalSymlinks(workDir)
+	if err != nil {
+		t.Fatalf("canonicalize working directory: %v", err)
+	}
+
+	gotWorkDir := filepath.Dir(filepath.Dir(got))
+	canonicalGotWorkDir, err := filepath.EvalSymlinks(gotWorkDir)
+	if err != nil {
+		t.Fatalf("canonicalize resolved working directory: %v", err)
+	}
+
+	if canonicalGotWorkDir != canonicalWorkDir {
+		t.Fatalf(
+			"unexpected canonical working directory for dot spec: got %q want %q",
+			canonicalGotWorkDir,
+			canonicalWorkDir,
+		)
 	}
 }
 
