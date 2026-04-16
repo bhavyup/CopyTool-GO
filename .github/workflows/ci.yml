@@ -101,7 +101,7 @@ jobs:
           go tool cover -func=coverage.out | tail -n 1
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-out
           path: coverage.out
@@ -168,7 +168,7 @@ jobs:
             go build -trimpath -ldflags "-s -w" -o "$out" ./cmd/copytool
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: copytool-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/copytool-${{ matrix.goos }}-${{ matrix.goarch }}*
