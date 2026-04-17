@@ -15,8 +15,9 @@ The `release.yml` workflow will:
 
 1. build binaries for supported OS/architecture targets
 2. package archives
-3. generate SHA-256 checksums
-4. publish a GitHub Release with generated notes
+3. upload both direct binaries and archive assets
+4. generate SHA-256 checksums
+5. publish a GitHub Release with generated notes
 
 ## Version Metadata
 
@@ -37,6 +38,37 @@ copytool -version
 1. Download each artifact from GitHub Releases
 2. Verify checksums against `checksums.txt`
 3. Smoke-test binary startup (`copytool -version`, `copytool -cli`)
+
+## End-user Install and Run
+
+Release assets include:
+
+1. Direct binaries:
+	- `copytool_<version>_windows_amd64.exe`
+	- `copytool_<version>_<os>_<arch>` for Linux/macOS
+2. Archives:
+	- `copytool_<version>_windows_amd64.zip`
+	- `copytool_<version>_<os>_<arch>.tar.gz`
+
+Example Windows direct install:
+
+```powershell
+$version = "v0.1.0"
+$asset = "copytool_0.1.0_windows_amd64.exe"
+$uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
+Invoke-WebRequest -Uri $uri -OutFile "copytool.exe"
+.\copytool.exe -version
+```
+
+Example Linux/macOS direct install:
+
+```bash
+VERSION="v0.1.0"
+ASSET="copytool_0.1.0_linux_amd64"
+curl -L -o copytool "https://github.com/bhavyup/CopyTool-GO/releases/download/${VERSION}/${ASSET}"
+chmod +x copytool
+./copytool -version
+```
 
 ## Rollback
 

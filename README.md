@@ -82,6 +82,46 @@ go run ./cmd/copytool
 copytool -version
 ```
 
+## Install From GitHub Release
+
+Download the latest assets from:
+
+- https://github.com/bhavyup/CopyTool-GO/releases/latest
+
+Available release assets now include both:
+
+- direct binaries, including Windows `.exe`
+- packaged archives (`.zip` for Windows and `.tar.gz` for Linux/macOS)
+
+### Windows (Direct .exe)
+
+```powershell
+$version = "v0.1.0"
+$asset = "copytool_0.1.0_windows_amd64.exe"
+$uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
+
+Invoke-WebRequest -Uri $uri -OutFile "copytool.exe"
+Unblock-File .\copytool.exe
+.\copytool.exe -version
+```
+
+### Linux/macOS (Direct Binary)
+
+```bash
+VERSION="v0.1.0"
+ASSET="copytool_0.1.0_linux_amd64"
+curl -L -o copytool "https://github.com/bhavyup/CopyTool-GO/releases/download/${VERSION}/${ASSET}"
+chmod +x copytool
+./copytool -version
+```
+
+### Using Archive Assets
+
+- Windows archive: `copytool_<version>_windows_amd64.zip`
+- Linux/macOS archive: `copytool_<version>_<os>_<arch>.tar.gz`
+
+Extract the archive and run the binary inside.
+
 ### Usage Examples
 
 Run interactive TUI:

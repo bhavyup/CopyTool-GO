@@ -62,11 +62,16 @@ jobs:
             ext=".exe"
           fi
 
+          binary_name="copytool_${version}_${{ matrix.goos }}_${{ matrix.goarch }}${ext}"
+          binary_path="dist/${binary_name}"
+
           CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
             go build -trimpath \
               -ldflags "-s -w -X main.version=${GITHUB_REF_NAME} -X main.commit=${commit_short} -X main.buildDate=${build_date}" \
               -o "${stage_dir}/copytool${ext}" \
               ./cmd/copytool
+
+          cp "${stage_dir}/copytool${ext}" "${binary_path}"
 
           cp README.md "$stage_dir/README.md"
           if [ -f LICENSE ]; then
@@ -81,13 +86,16 @@ jobs:
             tar -C dist -czf "dist/${target}.tar.gz" "${target}"
           fi
 
+          echo "binary=$binary_path" >> "$GITHUB_OUTPUT"
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ${{ steps.package.outputs.archive }}
+          path: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.package.outputs.binary }}
           retention-days: 7
 
   publish:
