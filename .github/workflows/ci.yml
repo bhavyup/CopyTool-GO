@@ -84,6 +84,8 @@ jobs:
   race_coverage:
     name: Race and coverage
     runs-on: ubuntu-latest
+    env:
+      MIN_COVERAGE: "10.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,6 +101,15 @@ jobs:
         run: |
           go test -race -covermode=atomic -coverprofile=coverage.out ./...
           go tool cover -func=coverage.out | tail -n 1
+
+      - name: Enforce minimum coverage
+        shell: bash
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%", "", $3); print $3}')
+          echo "Total coverage: ${total}%"
+          echo "Required minimum: ${MIN_COVERAGE}%"
+
+          awk -v total="$total" -v min="$MIN_COVERAGE" 'BEGIN { exit !(total+0 >= min+0) }'
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

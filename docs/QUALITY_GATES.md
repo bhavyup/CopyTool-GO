@@ -11,8 +11,9 @@ The CI workflow enforces the following on pull requests and pushes to `main`:
 3. module hygiene check (`go mod tidy` with zero diff)
 4. unit tests on Linux, macOS, and Windows
 5. race detector and coverage run on Linux
-6. vulnerability scan with `govulncheck`
-7. build verification across target OS/architecture matrix
+6. minimum total coverage threshold (currently `10.0%`)
+7. vulnerability scan with `govulncheck`
+8. build verification across target OS/architecture matrix
 
 ## Security and Dependency Hygiene
 

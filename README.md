@@ -201,7 +201,7 @@ We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, work
 
 ## License
 
-No license file was detected in the repository at scan time.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
 <!-- readme-gen:start:footer -->
 <div align="center">

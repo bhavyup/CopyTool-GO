@@ -38,3 +38,5 @@ Tests should:
 ## CI Behavior
 
 CI executes tests across Linux, macOS, and Windows to catch platform-specific path/IO regressions.
+
+The CI coverage job enforces a minimum total coverage threshold of `10.0%`.
