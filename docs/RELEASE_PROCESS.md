@@ -46,9 +46,23 @@ Release assets include:
 1. Direct binaries:
 	- `copytool_<version>_windows_amd64.exe`
 	- `copytool_<version>_<os>_<arch>` for Linux/macOS
-2. Archives:
+2. Windows installer binaries:
+	- `copytool-installer_<version>_windows_amd64.exe`
+	- `copytool-installer_<version>_windows_arm64.exe`
+3. Archives:
 	- `copytool_<version>_windows_amd64.zip`
 	- `copytool_<version>_<os>_<arch>.tar.gz`
+
+Example Windows installer usage (no source required):
+
+```powershell
+$version = "v0.1.2"
+$asset = "copytool-installer_0.1.2_windows_amd64.exe"
+$uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
+Invoke-WebRequest -Uri $uri -OutFile "copytool-installer.exe"
+.\copytool-installer.exe -version latest
+copytool -version
+```
 
 Example Windows direct install:
 

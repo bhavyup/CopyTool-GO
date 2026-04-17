@@ -92,6 +92,27 @@ Available release assets now include both:
 
 - direct binaries, including Windows `.exe`
 - packaged archives (`.zip` for Windows and `.tar.gz` for Linux/macOS)
+- Windows installer binaries (`copytool-installer_<version>_windows_<arch>.exe`)
+
+### Windows Installer (.exe)
+
+If you do not have source code, use the installer executable from Releases:
+
+```powershell
+$version = "v0.1.2"
+$asset = "copytool-installer_0.1.2_windows_amd64.exe"
+$uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
+
+Invoke-WebRequest -Uri $uri -OutFile "copytool-installer.exe"
+Unblock-File .\copytool-installer.exe
+.\copytool-installer.exe -version latest
+```
+
+The installer:
+
+- downloads the matching `copytool_<version>_windows_<arch>.exe`
+- installs to `%LOCALAPPDATA%\Programs\copytool\bin\copytool.exe`
+- adds the install bin directory to user `PATH`
 
 ### Windows (Direct .exe)
 
