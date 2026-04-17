@@ -54,7 +54,9 @@ jobs:
           commit_short="${GITHUB_SHA::7}"
 
           target="copytool_${version}_${{ matrix.goos }}_${{ matrix.goarch }}"
-          stage_dir="dist/${target}"
+          stage_root="$(mktemp -d)"
+          stage_dir="${stage_root}/${target}"
+          mkdir -p dist
           mkdir -p "$stage_dir"
 
           ext=""
@@ -80,11 +82,13 @@ jobs:
 
           if [ "${{ matrix.goos }}" = "windows" ]; then
             archive="dist/${target}.zip"
-            (cd dist && zip -q -r "${target}.zip" "${target}")
+            (cd "$stage_root" && zip -q -r "$GITHUB_WORKSPACE/${archive}" "${target}")
           else
             archive="dist/${target}.tar.gz"
-            tar -C dist -czf "dist/${target}.tar.gz" "${target}"
+            tar -C "$stage_root" -czf "$archive" "$target"
           fi
+
+          rm -rf "$stage_root"
 
           echo "binary=$binary_path" >> "$GITHUB_OUTPUT"
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
