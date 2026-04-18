@@ -46,12 +46,27 @@ Release assets include:
 1. Direct binaries:
 	- `copytool_<version>_windows_amd64.exe`
 	- `copytool_<version>_<os>_<arch>` for Linux/macOS
-2. Windows installer binaries:
+2. Windows bootstrap installer binaries (scriptable, downloads release binary):
 	- `copytool-installer_<version>_windows_amd64.exe`
 	- `copytool-installer_<version>_windows_arm64.exe`
-3. Archives:
+3. Windows wizard installer (double-click UI):
+	- `copytool-setup_<version>_windows_amd64.exe`
+4. Archives:
 	- `copytool_<version>_windows_amd64.zip`
 	- `copytool_<version>_<os>_<arch>.tar.gz`
+
+Example wizard installer usage (double-click):
+
+1. Download `copytool-setup_<version>_windows_amd64.exe`.
+2. Run the installer and follow wizard steps.
+3. Open a new terminal.
+4. Run `copytool -version`.
+
+Silent wizard mode (enterprise rollout):
+
+```powershell
+.\copytool-setup_0.1.0_windows_amd64.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+```
 
 Example Windows installer usage (no source required):
 

@@ -93,6 +93,18 @@ Available release assets now include both:
 - direct binaries, including Windows `.exe`
 - packaged archives (`.zip` for Windows and `.tar.gz` for Linux/macOS)
 - Windows installer binaries (`copytool-installer_<version>_windows_<arch>.exe`)
+- Windows wizard installer (`copytool-setup_<version>_windows_amd64.exe`)
+
+### Windows Wizard Installer (double-click UI)
+
+If you want a standard setup wizard experience:
+
+1. Download `copytool-setup_<version>_windows_amd64.exe` from Releases.
+2. Double-click it.
+3. Follow the installer wizard steps.
+4. Open a new terminal and run `copytool -version`.
+
+The wizard installer installs CopyTool to `%LOCALAPPDATA%\Programs\copytool\bin\copytool.exe` and updates user PATH.
 
 ### Windows Installer (.exe)
 

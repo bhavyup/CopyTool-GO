@@ -142,12 +142,67 @@ jobs:
           path: dist/copytool-installer_*_windows_${{ matrix.goarch }}.exe
           retention-days: 7
 
+  wizard_installer:
+    name: Build wizard installer (windows/amd64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build copytool binary for installer
+        shell: pwsh
+        run: |
+          $version = "${env:GITHUB_REF_NAME}".TrimStart('v')
+          $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $commitShort = "${env:GITHUB_SHA}".Substring(0,7)
+
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $binaryPath = "dist\\copytool_${version}_windows_amd64.exe"
+          $ldflags = "-s -w -X main.version=${env:GITHUB_REF_NAME} -X main.commit=$commitShort -X main.buildDate=$buildDate"
+
+          $env:CGO_ENABLED = "0"
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+
+          go build -trimpath -ldflags $ldflags -o $binaryPath ./cmd/copytool
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build wizard installer executable
+        shell: pwsh
+        run: |
+          $version = "${env:GITHUB_REF_NAME}".TrimStart('v')
+          $isccPath = "${env:ProgramFiles(x86)}\\Inno Setup 6\\ISCC.exe"
+          if (-not (Test-Path $isccPath)) {
+            throw "ISCC.exe not found at $isccPath"
+          }
+
+          $binaryPath = "${pwd}\\dist\\copytool_${version}_windows_amd64.exe"
+          $outputDir = "${pwd}\\dist"
+          & $isccPath "/DAppVersion=$version" "/DBinaryPath=$binaryPath" "/DOutputDir=$outputDir" ".\\scripts\\installer\\copytool-wizard.iss"
+
+      - name: Upload wizard installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-wizard-installer-windows-amd64
+          path: dist/copytool-setup_*_windows_amd64.exe
+          retention-days: 7
+
   publish:
     name: Publish GitHub release
     runs-on: ubuntu-latest
     needs:
       - build
       - installer
+      - wizard_installer
     steps:
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
