@@ -118,7 +118,7 @@ begin
   end;
 
   while Pos(';;', Work) > 0 do
-    Work := StringChangeEx(Work, ';;', ';', True);
+    StringChangeEx(Work, ';;', ';', True);
 
   if (Length(Work) > 0) and (Work[1] = ';') then
     Delete(Work, 1, 1);
