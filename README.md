@@ -111,7 +111,7 @@ The wizard installer installs CopyTool to `%LOCALAPPDATA%\Programs\copytool\bin\
 If you do not have source code, use the installer executable from Releases:
 
 ```powershell
-$version = "v0.1.2"
+$version = "v0.1.5"
 $asset = "copytool-installer_0.1.2_windows_amd64.exe"
 $uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
 
@@ -135,7 +135,7 @@ The installer:
 ### Windows (Direct .exe)
 
 ```powershell
-$version = "v0.1.0"
+$version = "v0.1.5"
 $asset = "copytool_0.1.0_windows_amd64.exe"
 $uri = "https://github.com/bhavyup/CopyTool-GO/releases/download/$version/$asset"
 
@@ -147,7 +147,7 @@ Unblock-File .\copytool.exe
 ### Linux/macOS (Direct Binary)
 
 ```bash
-VERSION="v0.1.0"
+VERSION="v0.1.5"
 ASSET="copytool_0.1.0_linux_amd64"
 curl -L -o copytool "https://github.com/bhavyup/CopyTool-GO/releases/download/${VERSION}/${ASSET}"
 chmod +x copytool
@@ -188,16 +188,16 @@ copytool -cli -include-ext ".go,.md" -exclude-dirs "dist,tests" -clipboard .
 
 ```mermaid
 graph TD
-    A[🧑‍💻 User] --> B[🖥️ TUI Layer]
-    A --> C[⌨️ CLI Mode]
-    B --> D[🔍 Core Scan Engine]
+    A["🧑‍💻 User"] --> B["🖥️ TUI Layer"]
+    A --> C["⌨️ CLI Mode"]
+    B --> D["🔍 Core Scan Engine"]
     C --> D
-    D --> E[🧹 Ignore + Filter Pipeline]
-    E --> F[📂 Tree + Selection Model]
-    F --> G[📦 Export Builder]
-    G --> H[📄 tools/list.txt]
-    G --> I[📝 output.txt or custom output path]
-    G --> J[📋 Clipboard (optional)]
+    D --> E["🧹 Ignore + Filter Pipeline"]
+    E --> F["📂 Tree + Selection Model"]
+    F --> G["📦 Export Builder"]
+    G --> H["📄 tools/list.txt"]
+    G --> I["📝 output.txt or custom output path"]
+    G --> J["📋 Clipboard (optional)"]
 ```
 <!-- readme-gen:end:architecture -->
 
