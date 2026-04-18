@@ -108,6 +108,12 @@ Unblock-File .\copytool-installer.exe
 .\copytool-installer.exe -version latest
 ```
 
+Silent/scripted install:
+
+```powershell
+.\\copytool-installer.exe -version latest -quiet
+```
+
 The installer:
 
 - downloads the matching `copytool_<version>_windows_<arch>.exe`

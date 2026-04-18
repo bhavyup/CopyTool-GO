@@ -29,9 +29,23 @@ func run() error {
 	repoFlag := flag.String("repo", defaultRepo, "GitHub repository in owner/name format")
 	installRootFlag := flag.String("install-root", defaultInstallRoot(), "installation root directory")
 	skipPathFlag := flag.Bool("skip-path", false, "skip adding install bin directory to user PATH")
+	quietFlag := flag.Bool("quiet", false, "suppress non-error output for scripted installs")
 	timeoutFlag := flag.Duration("timeout", 90*time.Second, "download timeout")
 
 	flag.Parse()
+	quiet := *quietFlag
+
+	logf := func(format string, args ...any) {
+		if !quiet {
+			fmt.Printf(format, args...)
+		}
+	}
+
+	logln := func(args ...any) {
+		if !quiet {
+			fmt.Println(args...)
+		}
+	}
 
 	if runtime.GOOS != "windows" {
 		return errors.New("copytool-installer.exe is intended for Windows")
@@ -56,7 +70,7 @@ func run() error {
 	asset := fmt.Sprintf("copytool_%s_windows_%s.exe", versionNoPrefix, arch)
 	url := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", repo, tag, asset)
 
-	fmt.Printf("Downloading %s\n", url)
+	logf("Downloading %s\n", url)
 	tempPath, err := downloadAsset(url, *timeoutFlag)
 	if err != nil {
 		return err
@@ -87,27 +101,27 @@ func run() error {
 		pathUpdated = added
 	}
 
-	fmt.Println("")
-	fmt.Println("Installation complete")
-	fmt.Printf("  binary: %s\n", targetPath)
+	logln("")
+	logln("Installation complete")
+	logf("  binary: %s\n", targetPath)
 
 	if *skipPathFlag {
-		fmt.Println("  PATH: skipped by flag")
+		logln("  PATH: skipped by flag")
 	} else if pathUpdated {
-		fmt.Printf("  PATH: added %s\n", binDir)
+		logf("  PATH: added %s\n", binDir)
 	} else {
-		fmt.Printf("  PATH: already contained %s\n", binDir)
+		logf("  PATH: already contained %s\n", binDir)
 	}
 
-	fmt.Println("")
-	fmt.Println("Open a NEW terminal window to pick up PATH changes.")
+	logln("")
+	logln("Open a NEW terminal window to pick up PATH changes.")
 
 	if out, err := exec.Command(targetPath, "-version").CombinedOutput(); err == nil {
 		versionText := strings.TrimSpace(string(out))
 		if versionText != "" {
-			fmt.Println("")
-			fmt.Println("Installed version:")
-			fmt.Println(versionText)
+			logln("")
+			logln("Installed version:")
+			logln(versionText)
 		}
 	}
 

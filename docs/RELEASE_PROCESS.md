@@ -64,6 +64,12 @@ Invoke-WebRequest -Uri $uri -OutFile "copytool-installer.exe"
 copytool -version
 ```
 
+Silent/scripted mode:
+
+```powershell
+.\\copytool-installer.exe -version latest -quiet
+```
+
 Example Windows direct install:
 
 ```powershell
