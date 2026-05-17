@@ -37,10 +37,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
@@ -94,7 +94,7 @@ jobs:
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
 
       - name: Upload release artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
@@ -114,10 +114,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
@@ -136,7 +136,7 @@ jobs:
               ./cmd/copytool-installer
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-installer-windows-${{ matrix.goarch }}
           path: dist/copytool-installer_*_windows_${{ matrix.goarch }}.exe
@@ -147,10 +147,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
@@ -190,7 +190,7 @@ jobs:
           & $isccPath "/DAppVersion=$version" "/DBinaryPath=$binaryPath" "/DOutputDir=$outputDir" ".\\scripts\\installer\\copytool-wizard.iss"
 
       - name: Upload wizard installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-wizard-installer-windows-amd64
           path: dist/copytool-setup_*_windows_amd64.exe
@@ -205,7 +205,7 @@ jobs:
       - wizard_installer
     steps:
       - name: Download packaged artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           pattern: release-*
@@ -217,7 +217,7 @@ jobs:
           sha256sum dist/* > dist/checksums.txt
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/*
