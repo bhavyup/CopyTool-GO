@@ -12,7 +12,7 @@ require (
 	github.com/go-git/go-git/v5 v5.19.3
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/sqweek/dialog v0.0.0-20260123140253-64c163d53aac
-	golang.org/x/sys v0.48.0
+	golang.org/x/sys v0.49.0
 )
 
 require (
